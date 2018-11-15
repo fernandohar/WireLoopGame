@@ -17,10 +17,12 @@ unsigned long songStartTime;
 
 //Debounce handling
 unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 50;
+unsigned long debounceDelay = 20;
 int lastButtonState = LOW;
 int buttonState = LOW;
 
+unsigned long gameoverTime = 0;
+unsigned long gameoverMusicDelay = 150;
 
 //GAME logic ///
 #define MAXLIFE 5
@@ -39,10 +41,13 @@ void updateLifeLED(){
 		mask = mask << 1;
 		mask = mask | 1; //	
 	}
-	mask << 3;
+	mask = mask << 3;
 	mask |= B00000111; //do not update D2, Rx, Tx
-	//PORTD &= mask;	
-  digitalWrite(7, HIGH);
+//  Serial.print("mask");
+//  Serial.println(mask, BIN);
+  PORTD &= B00000111;
+	PORTD |= mask;	
+  //digitalWrite(7, HIGH);
 }
 
 void initLifeLED(){
@@ -55,20 +60,29 @@ void resetGame(){
 	life = MAXLIFE;
 	updateLifeLED();
 	//Start Loop background sound
+ Serial.println("RepeatPlay");
+  mp3.repeatPlay(1);
+  //mp3.playRandom();
 }
 
 void reduceLife(){
 	--life;
-	Serial.print("Life: [");
-	Serial.print(life); 
-	Serial.println("]");
+//	Serial.print("Life: [");
+//	Serial.print(life); 
+//	Serial.println("]");
 	
 	updateLifeLED();
 	if (life > 0){
 		//interrupt and play hit sound
+    mp3.playAdFile(2);
 	}else{
 		//Stop background sound;
+    Serial.print("Game Over");
+    mp3.stop();
+    delay(50);
 		//play Gameover sound
+   mp3.playMp3File(3);
+   gameoverTime = millis();
 	}
 	
 }
@@ -79,7 +93,7 @@ void initMP3TF16P(){
     mp3.stop();
     delay(10);
     mp3.setAmplification(false, 0);
-    mp3.setVol(25);
+    mp3.setVol(20);
     delay(100);
     uint8_t mp3_Vol = mp3.getVol();
     Serial.print("Volume:"); Serial.println(mp3_Vol);
@@ -141,6 +155,7 @@ void setup() {
     Serial.begin(115200);
     Serial.println("Wire Game Loop Initializing");
     //Hardware initialization
+
 	initLifeLED();
     initMP3TF16P();
 	resetGame();
@@ -151,7 +166,13 @@ void loop() {
 	if (life > 0){
 		checkWire();
 	}else{
-		//when gameover song stops, reset game
-		
+    if( (millis() - gameoverTime) > gameoverMusicDelay){
+      uint8_t playStatus = mp3.getPlayStatus();
+      Serial.print("PlayStatus");
+      Serial.println(playStatus);
+      if(playStatus == 0){
+        resetGame();
+      }
+    }
 	}
 }

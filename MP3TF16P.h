@@ -48,7 +48,7 @@ class MP3TF16P {
         inline void volUp()         { adjVol(1); }
         inline void volDown()       { adjVol(-1); }
 		uint8_t getPlayStatus();
-
+        void repeatPlay(byte seq); //0x08
 
     private:
         void initObject(SoftwareSerial *ssData, HardwareSerial *hsDebug);

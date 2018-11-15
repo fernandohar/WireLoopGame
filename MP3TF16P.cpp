@@ -79,6 +79,7 @@ bool MP3TF16P::sendCommand(bool expectReturn) {
 	return true;
 }
 
+
 void MP3TF16P::clearRxBuffer() {
     while (_ss->available() ) {
         _ss->read();
@@ -176,6 +177,13 @@ void MP3TF16P::playFolderFile(byte folder, byte seq) {
 	sendCommand();    
 }
 
+void MP3TF16P::repeatPlay(byte seq){ //0x08
+  resetCommandBuffer();
+  _buf[3] = 0x08;
+  _buf[6] = seq;
+  sendCommand();
+
+}
 void MP3TF16P::playMp3File(byte seq) {
 	resetCommandBuffer();
 	_buf[3] = 0x12;
@@ -213,6 +221,7 @@ uint8_t MP3TF16P::getPlayStatus() {
 	}
 	return 0xFF;
 }
+
 
 void MP3TF16P::adjVol(int diff) {
 	if (diff == 0) return;
